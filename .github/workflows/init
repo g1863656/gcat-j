@@ -1,0 +1,15 @@
+
+
+const win = nw.Window.get();
+
+const AppTitle = "【】 電子計算機ツール <GCAT>";
+
+const tray = new nw.Tray({ title: 'Tray', tooltip: AppTitle , icon: ''});
+
+if(nw.App.argv[0] == "-b" || nw.App.argv[0] == "--background"){
+    // backgroundモードなら
+    console.info("Background Mode Booting");
+    win.hide();
+} else {
+    console.info("Normal Mode Booting");
+};
