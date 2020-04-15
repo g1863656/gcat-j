@@ -1,0 +1,333 @@
+/*
+コマンド実行用モジュール。従来のpipeexecみたいなもの。
+
+★非同期（ストリーム処理）系
+->バックグラウンドでコマンド実行するとともに、受け取った標準出力を逐次変換しながら処理する。
+  従来のpipeexecのようにコマンド実行の終了を待たないので高速かつメモリが少なくすむ。
+execAync             : 非同期処理でコマンドを実行する。実行したいコマンド、各行単位での中間処理及び最終処理のコールバックを渡す。
+                       execAsync(実行したいコマンド、各行に対する処理(data),最終処理)
+                       最終処理ではdataを受け取れないので、中間処理の外側のスコープでdataを結合する処理をするとよい。
+execCommandAsync     : 上記関数をCommand用にラッピングしたもの
+execWmicAsync        : 上記関数をWMIC用にラッピングしたもの
+getStringsFromCmd    : Commandを実行して文字列を取得する。上記関数群の最上位ラッパーで、通常これを利用する。
+                       getStringsFromCmd(実行したいコマンド、最終処理)
+                       ただし、ダブルクォーテーションとスペースを同時に含むコマンドのパースは未対応。今後修正したい。
+execCommandAsyncShare: その場しのぎ用。ほかに使い道なし
+getStringsFromCmdShare:その場しのぎ用。ほかに使い道なし
+                       getJsonFromWmic      : WMICを実行してJSONを取得する。めっちゃ便利。
+                       getJsonFromWmicAsync(実行したいWMICコマンド、最終処理)
+                       上記のAsyncコマンド群と違い、自動的にJSON形成を行うので、最終処理のコールバックのみ指定。
+                       処理に失敗した場合、空配列を渡す。
+getStringFromRegQuery: reg queryを実行して文字列を取得する。
+getStringsFromCertutil_sha1:ファイル検査用にファイルパスからsha1ハッシュ値を取得する。ほかに使い道なし
+getStringsFromCertutil_sha256:ファイルパスからsha256ハッシュ値を取得する。ほかに使い道なし
+getJsonFromRegQuery  : reg queryを実行して文字列を取得し、自動的にjsonにする。めっちゃ便利だよ。力作です。
+getStringsFromRegQueryPath:その場しのぎ用。ほかに使い道なし
+getJsonFromRegQueryPath:その場しのぎ用。ほかに使い道なし
+
+★非同期待機系
+->バックグランドでコマンド実行するも、コマンドが終了してから処理を行う。
+  従来のpipeexecより少しだけ早いが、ストリーム処理系と違って受け取りデータが大きくなるほどメモリを消費する。
+execCommandSync      : コマンド実行し、出力を待機したのち、コールバックを実行する。
+execWmicSync         : 上記関数をWMIC用にラッピングしたもの。
+*/
+const { spawn } = require('child_process');
+const { spawnSync } = require('child_process');
+const Line = require('./linestream.js');
+const CSV = require('comma-separated-values');
+let iconv = require('iconv-lite');
+const Cmdfilter = require('./cmdfilter.js');
+
+class commandexec{
+    constructor(){
+    }
+    execAsync(coms,args,iterating,ending){
+        try {
+            return new Promise((resolve,reject) => {
+                const Ok = resolve;
+                const NG = reject;
+                const commandExecStream = new spawn(coms,args);
+                const lineStreamStdout = new Line();
+                const decodeStreamToShiftJISStdout = new iconv.decodeStream('Shift_JIS');
+                const lineStreamStderr = new Line();
+                const decodeStreamToShiftJISStderr = new iconv.decodeStream('Shift_JIS');
+        
+                lineStreamStdout.on('data',iterating);
+                lineStreamStdout.on('end',()=>{ Ok(ending()); });
+        
+                let results_stderr = "";
+                lineStreamStderr.on('data',(data)=>{ results_stderr += data;});
+                lineStreamStderr.on('end',()=>{
+                    if(results_stderr) { console.warn(results_stderr); NG(results_stderr); };
+                });
+        
+                commandExecStream.stdout
+                    .pipe(decodeStreamToShiftJISStdout)
+                    .pipe(lineStreamStdout);
+                commandExecStream.stderr
+                    .pipe(decodeStreamToShiftJISStderr)
+                    .pipe(lineStreamStderr);
+                lineStreamStdout.resume();
+            }); // End of Promise Generation
+        } catch (error) {
+            console.error('x Error : execAsync function ：' + error);
+        }
+    }
+    execCommandAsync(command,iterating,ending){
+        try {
+            const [coms,...args] = command.split(' ');
+            return this.execAsync(coms,args,iterating,ending);
+        } catch (error) {
+            console.error('x Error : function execCommandAsync() ：' + error);
+        }
+    }
+    execWmicAsync(alias,iterating,ending){
+        try {
+            alias = "wmic " + alias + " get /format:csv"
+            return this.execCommandAsync(alias,iterating,ending);
+        } catch (error) {
+            console.error('x Error : function execWmicAsync() ：' + error);
+        }
+    }
+    execWmicAsyncVer2(alias,iterating,ending){
+        try {
+            alias = "wmic " + alias + " list /format:csv"
+            return this.execCommandAsync(alias,iterating,ending);
+        } catch (error) {
+            console.error('x Error : function execWmicAsync() ：' + error);
+        }
+    }
+    getStringsFromCmd(command,doing){
+        try {
+            console.log('> Start : cmd.exe -> ' + command);
+            let results = "";
+            return this.execCommandAsync(command,(data)=>{
+                results += "\n" + data;
+            },()=>{
+                console.info('< Executed : cmd.exe -> ' + command);
+                // console.log(results);
+                if(results=="") {
+                    console.warn("- No data has received : cmd.exe -> " + command);
+                }
+                doing(results);
+            });
+        } catch (error) {
+            console.error('x Error : function execCommandAsync() ：' + error);
+        }
+    }
+    execCommandAsyncShare(command,iterating,ending){
+        try {
+            var cmd = "";
+            var i;
+            const [coms,...args] = command.split(' ');
+             for (i = 1 ; i < args.length+1 ; i++){
+                 if (i==1){
+                    cmd = cmd + args[i-1];
+                 }else{
+                    cmd = cmd + " " + args[i-1];
+                 }
+             }
+             for (i = 1; i < args.length; i++){
+                args.pop();
+             }
+             args[0] = cmd;
+            return this.execAsync(coms,args,iterating,ending);
+        } catch (error) {
+            console.error('x Error : function execCommandAsync() ：' + error);
+        }
+    }
+    getStringsFromCmdShare(command,doing){
+        try {
+            console.log('> Start : cmd.exe -> ' + command);
+            let results = "";
+            return this.execCommandAsyncShare(command,(data)=>{
+                results += "\n" + data;
+            },()=>{
+                console.info('< Executed : cmd.exe -> ' + command);
+                // console.log(results);
+                if(results=="") {
+                    console.warn("- No data has received : cmd.exe -> " + command);
+                }
+                doing(results);
+            });
+        } catch (error) {
+            console.error('x Error : function execCommandAsync() ：' + error);
+        }
+    }
+    getJsonFromWmic(alias,doing){
+        try {
+            console.log('> Start : wmic ' + alias + ' get /format:csv');
+            let results = "";
+            return this.execWmicAsync(alias,
+                (data)=>{
+                    results += data;
+                },
+                ()=>{
+                    console.info('< Executed : wmic ' + alias + ' get /format:csv');
+                    let output = [];
+                    if(results=="") {
+                        console.warn("- No data has received : wmic " + alias);
+                    } else {
+                        output = new CSV(results,{ header: true , cast: false}).parse();
+                        if(output==[]){
+                            console.warn("- Failed parsing data from wmic " + alias);
+                        } else {
+                            console.info('+ Successed parsing data from wmic() ' + alias);
+                            return doing(output);
+                        }
+                    }
+                });
+        } catch (error) {
+            console.error('x Error : function getJsonFromWmic() ：' + error);
+        }
+    }
+    getJsonFromWmicVer2(alias,doing){
+        try {
+            console.log('> Start : wmic ' + alias + ' list full /format:csv');
+            let results = "";
+            return this.execWmicAsyncVer2(alias,
+                (data)=>{
+                    results += data;
+                },
+                ()=>{
+                    console.info('< Executed : wmic ' + alias + ' list full /format:csv');
+                    let output = [];
+                    if(results=="") {
+                        console.warn("- No data has received : wmic " + alias);
+                    } else {
+                        output = new CSV(results,{ header: true , cast: false}).parse();
+                        if(output==[]){
+                            console.warn("- Failed parsing data from wmic " + alias);
+                        } else {
+                            console.info('+ Successed parsing data from wmic() ' + alias);
+                            return doing(output);
+                        }
+                    }
+                });
+        } catch (error) {
+            console.error('x Error : function getJsonFromWmic() ：' + error);
+        }
+    }
+    getStringsFromRegQuery(path,doing){
+        try {
+            console.log('> Start : reg query "' + path + '"');
+            let results;
+            return this.execAsync("reg",["query",path],(data)=>{
+                results += "\n" + data;
+            },()=>{
+                console.log('< Executed : reg query "' + path + '"');
+                if(results=="") {
+                    console.warn("- No data has received : reg query " + path + '"');
+                }
+                doing(results);
+            });
+        } catch (error) {
+            console.error('x Error : function getStringsFromRegQuery() ：' + error);
+        }
+    }
+    getStringsFromCertutil_sha1(path,doing){
+        try {
+            console.log('> Start : CertUtil -hashfile "' + path + '" SHA1');
+            let results;
+            return this.execAsync("CertUtil",["-hashfile",path,"SHA1"],(data)=>{
+                results += "\n" + data;
+            },()=>{
+                console.log('< Executed : Certutil -hashfile "' + path + '" SHA1');
+                if(results=="") {
+                    console.warn("- No data has received : Certutil -hashfile " + path + '" SHA1');
+                }
+                doing(results);
+            });
+        } catch (error) {
+            console.error('x Error : function getStringsFromCertutil() ：' + error);
+        }
+    }
+    getStringsFromCertutil_sha256(path,doing){
+        try {
+            console.log('> Start : CertUtil -hashfile "' + path + '" SHA256');
+            let results;
+            return this.execAsync("CertUtil",["-hashfile",path,"SHA256"],(data)=>{
+                results += "\n" + data;
+            },()=>{
+                console.log('< Executed : Certutil -hashfile "' + path + '" SHA256');
+                if(results=="") {
+                    console.warn("- No data has received : Certutil -hashfile " + path + '" SHA256');
+                }
+                doing(results);
+            });
+        } catch (error) {
+            console.error('x Error : function getStringsFromCertutil() ：' + error);
+        }
+    }
+    getJsonFromRegQuery(path,doing){
+        try {
+            return this.getStringsFromRegQuery(path,(data)=>{
+                let results;
+                results = Cmdfilter(data).removeNoise()
+                .removeFirstLine()
+                .automakeJson();
+                doing(results);
+            });
+        } catch (error) {
+            console.error('x Error : function getJsonFromRegQuery() ：' + error);
+        }
+    }
+    getStringsFromRegQueryPath(path,doing){
+        try {
+            //path = path.replace(/ \/f/,"\" \/f")
+            //path = path.substr(0,path.length-1);
+            console.log('> Start : reg query ' + path);
+            let results;
+            return this.execAsync("reg",["query",path],(data)=>{
+                results += "\n" + data;
+            },()=>{
+                console.log('< Executed : reg query ' + path);
+                if(results=="") {
+                    console.warn("- No data has received : reg query " + path);
+                }
+                doing(results);
+            });
+        } catch (error) {
+            console.error('x Error : function getStringsFromRegQuery() ：' + error);
+        }
+    }
+    getJsonFromRegQueryPath(path,doing){
+        try {
+            return this.getStringsFromRegQueryPath(path,(data)=>{
+                let results;
+                results = Cmdfilter(data).removeNoise()
+                .removeFirstLine()
+                .automakeJson();
+                doing(results);
+            });
+        } catch (error) {
+            console.error('x Error : function getJsonFromRegQuery() ：' + error);
+        }
+    }
+    execCommandSync(command,doing){
+        try {
+            const [coms,...args] = command.split(' ');
+            console.log("> Start : cmd.exe -> " + command);
+            let results;
+            results = spawnSync(coms,args);
+            results.stdout = iconv.decode(results.stdout,"Shift_JIS");
+            console.log("< Executed : cmd.exe -> " + command);
+            if(iconv.decode(results.stderr,"Shift_JIS")){
+                console.warn(""+iconv.decode(results.stderr,"Shift_JIS"));
+            }
+            return doing(results.stdout);
+        } catch (error) {
+            console.error('x Error : function execCommand() ：' + error);
+        }
+    }
+    execWmicSync(alias,doing){
+        try {
+            alias = "wmic " + alias + " get /format:csv"
+            return this.execCommand(alias,doing);
+        } catch (error) {
+            console.error('x Error : function execWmic() ：' + error);
+        }
+    }
+}
+
+module.exports = new commandexec();
