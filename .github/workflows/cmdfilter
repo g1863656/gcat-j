@@ -1,0 +1,262 @@
+/*
+コマンド出力の結果を各種加工するためのフィルターモジュール。
+★メソッドチェーン対応！★
+replacer       : 正規表現に合致したパターンをすべて処理するリプレイサ
+getBefore      : 正規表現に合致した<最初>のパターンの前部分をすべて取得するフィルタ
+getAfter       : 正規表現に合致した<最後>のパターンの後部分をすべて取得するフィルタ
+getISODate()   : 日付（年月日）をISO表記に変換する。
+getISOtoISO()  : 世界標準時表記を日本標準時表記に変換する。
+removeNoise    : 改行のみの行、文章の前後の不要な空白・改行、２個以上連続するスペースを取り除くフィルタ
+removeCRLF     : 改行を空白に置き換えるフィルタ 
+removeLastLine : 最終行を取り除くフィルタ
+removeFirstLine: 最初行を取り除くフィルタ
+
+automakeJson   : 取得したデータを解析して自動的にJsonオブジェクトに変換して取得するフィルタ
+automakeJsonVer2:その場しのぎ用。他では使えない。
+autogetParam   : 取得したデータを自動解析して、与えられたキーに合致するであろうパラメータを取得するフィルタ
+                 複数のキーが配列で与えられた場合、与えられた順番にパラメータを捜索する
+
+matchArray     : 正規表現に合致したパターンのすべてを配列にして取得するメソッド
+splitArray     : 特定パターンで分割して配列を取得するメソッド
+toString       : フィルタ結果を取得するメソッド
+toNumber       : フィルタ結果を可能な限り数値型に変換して取得するメソッド(合致しない場合、0になる)
+toJsonFromCSV  : CSV形式を読み込んで、JSONオブジェクトを返す
+toArrayFromCSV  : CSV形式を読み込んで、配列を返す
+*/
+const CSV = require('comma-separated-values');
+class Cmdfilter {
+    constructor(src){
+        this.source = new String(src);
+        this.source = this.source.replace(/\r\n/g,"\n");
+        this.source = this.source.replace(/\r/g,"\n");
+        this.source = this.source.replace(/^HKEY.*/g," ");//追加しました。今泉
+        //this.source = this.source.replace(/^\nHKEY.*/g,"");//追加しました。今泉
+    }
+    replacer(expression,process) {
+        let tokens = [];
+        if(typeof(expression)=="string"){
+            tokens = this.source.match(new RegExp(expression,"g"));
+        }
+        if(typeof(process)=="function"){
+            for (let i = 0; i < tokens.length; i++) {
+                tokens[i] = process(tokens[i]);
+                this.source = this.source.replace(new RegExp(expression),tokens[i]);
+            };
+        };
+        return this;
+    };
+    getBefore(expression) {
+        if(typeof(expression)=="string"){
+            let _source = new String(this.source);
+            this.source = "";
+
+            if(_source.search(new RegExp(expression)) != -1){
+                this.source = _source.slice(0,_source.search(new RegExp(expression)));
+            }
+        }
+        return this;
+    }
+    getAfter(expression) {
+        if(typeof(expression)=="string"){
+            let _source = new String(this.source);
+            this.source = "";
+
+            while (_source.search(new RegExp(expression)) != -1) {
+                _source = _source.slice(_source.search(new RegExp(expression)));
+                _source = _source.replace(new RegExp(expression),"");
+                this.source = _source;
+            }
+        }
+        return this;
+    }
+    getISODate() {
+        var yy = "0000"; var mm = "00"; var dd = "00"; var hh = "00"; var mi = "00"; var ss = "00";
+        //11/2/2018表記を2018-02-11T00:00:00:+09:00に変換する
+        //let val = expression.search(/\//);
+        if (this.source.search(/\//) > 0 && this.source.length < 11){
+            let tmp = this.source.split("/");
+            yy = tmp[2];
+            if (tmp[0].length == 1){
+                mm = "0" + tmp[0];
+            }else{
+                mm = tmp[0];
+            }
+            if (tmp[1].length == 1){
+                dd = "0" + tmp[1];
+            }else{
+                dd = tmp[1];
+            }
+        }else{
+            switch(this.source.length){
+                case 8://20180211表記を2018-02-11T00:00:00:+09:00に変換する
+                    yy = this.source.substr(0,4);
+                    mm = this.source.substr(4,2);
+                    dd = this.source.substr(6,2);break;
+                case 17://2018/02/11  10:12表記を2018-02-11T10:12:00:+09:00に変換する
+                    yy = this.source.substr(0,4);
+                    mm = this.source.substr(5,2);
+                    dd = this.source.substr(8,2);
+                    hh = this.source.substr(12,2);
+                    mi = this.source.substr(15,2);break;
+                case 19://2018:02:11 10:12:34表記を2018-02-11T10:12:34:+09:00に変換する
+                    yy = this.source.substr(0,4);
+                    mm = this.source.substr(5,2);
+                    dd = this.source.substr(8,2);
+                    hh = this.source.substr(11,2);
+                    mi = this.source.substr(14,2);
+                    ss = this.source.substr(17,2);break;
+                case 24://2018-02-11T12:34:56.000Z表記を2018-02-11T12:34:56+09:00に変換する
+                    yy = this.source.substr(0,4);
+                    mm = this.source.substr(5,2);
+                    dd = this.source.substr(8,2);
+                    hh = this.source.substr(11,2);
+                    mi = this.source.substr(14,2);
+                    ss = this.source.substr(17,2);break;
+            }
+        }
+        this.source = "";
+        this.source = yy + "-" + mm + "-" + dd + "T" + hh + ":" + mi + ":" + ss + "+09:00";
+        return this;
+    }
+    getISOtoISO(){
+        //2018-03-08T07:21:55.983Z ⇒ 2018-03-08T16:21:55+09:00 に変換する
+        let ExecDayTime = this.source.replace(/-/g,":").replace("T",":").substring(0,19);
+        let arg = ExecDayTime.split(":");
+        for (let i =0 ; i < 6; i++){
+            arg[i] = parseInt(arg[i]);
+        };
+        console.log(arg[0]);
+        if (arg[3] + 9 >23){
+            arg[3] = arg[3] + 9 - 24;
+            arg[2] = arg[2] + 1;
+        } else {
+            arg[3] = arg[3] + 9;
+        }
+        for (let i =1 ; i < 6; i++){
+            if (arg[i] < 10){
+                arg[i] = "0" + arg[i];
+            };
+        };
+        ExecDayTime = arg[0] + "-" + arg[1] + "-" + arg[2] + "T" + arg[3] + ":" + arg[4] + ":" + arg[5] + "+09:00";
+        return ExecDayTime;
+    }
+    removeNoise() {
+        this.source = this.source.trim();
+        this.source = this.source.replace("\n\n","\n");
+        while(this.source.search("  ") != -1){
+            this.source = this.source.replace("  "," ");
+        }
+        let lines = this.source.split("\n");
+        this.source = "";
+        for (let i = 0; i < lines.length; i++) {
+            let line = lines[i];
+            line = line.trim();
+            if(i != lines.length -1 ){
+                this.source += line + "\n";
+            } else {
+                this.source += line;
+            }
+        };
+        return this;
+    }
+    removeCRLF(){
+        this.source = this.source.replace("\n"," ");
+        return this;
+    }
+    removeLastLine(){
+        let lines = this.source.split("\n");
+        this.source = "";
+        for (let i = 0; i < lines.length -1; i++) {
+            if(i < lines.length - 2){
+                this.source += lines[i] + "\n";
+            } else {
+                this.source += lines[i];
+            }
+        }
+        return this;
+    }
+    removeFirstLine(){
+        let lines = this.source.split("\n");
+        this.source = "";
+        for (let i = 0; i < lines.length; i++) {
+            if(i != 0){
+                this.source += lines[i] + "\n";
+            }
+        }
+        return this;
+    }
+    automakeJson(){
+        const lines = this.source.split("\n");
+        const result = {};
+        for (let i = 0; i < lines.length; i++) {
+            const line = lines[i].trim();
+            const [key,type,..._value] = line.split(" ");
+            if(key){
+                result[key] = _value.join(" ");
+            };
+        };
+        return result;
+    }
+    automakeJsonVer2(){
+        const lines = this.source.split("\n");
+        const result = {};
+        for (let i = 0; i < lines.length; i++) {
+            const line = lines[i].trim();
+            const [key,type] = line.split(":");
+            if(key){
+                result[key] = type;
+            };
+        };
+        return result;
+    }
+    getSpParamFromLine(key){
+        return this.getAfter(key + " ").toString();
+    }
+    getColonParamFromLine(key){
+        return this.getAfter(key + ": ").toString();
+    }
+    autogetParam(keys){
+        if(typeof(keys)=="string"){ keys = new Array(keys); }
+        let result = "";
+        const _source = this.source;
+        keys.some((element) => {
+            const lines = _source.split("\n");
+            lines.some((line) => {
+                const filter1 = new Cmdfilter(line);
+                result = filter1.getSpParamFromLine(element);
+                if(result){ return result; }
+                const filter2 = new Cmdfilter(line);
+                result = filter2.getColonParamFromLine(element);
+                if(result){ return result; }
+            });
+            if(result) { return result; };
+        });
+        return result;
+    }
+    matchArray(expression){
+        return this.source.match(new RegExp(expression));
+    }
+    splitArray(expression){
+        return this.source.split(expression);
+    }
+    toString(){
+        return this.source.trim();
+    }
+    toNumber(){
+        if( typeof(this.source) != "Number" ){
+            return 0;
+        } else {
+            return this.source;
+        }
+    }
+    toJsonFromCSV(){
+        return new CSV(this.source,{ header: true }).parse();
+    }
+    toArrayFromCSV(){
+        return new CSV(this.source).parse();
+    }
+}
+
+module.exports = (src) => {
+    return new Cmdfilter(src);
+}
