@@ -1,0 +1,140 @@
+<div class="container">
+  <h2>基本情報の入力（１／４）</h2>
+
+  <hr>
+  <h3>あなたの情報<span ng-show="info_1.$invalid"><font size="3" color="ee0000"><br>　　　　下記項目に入力誤り、未入力があります。＜各項目全角２０文字以内。内線のみ半角文字＞</font></span></h3>
+
+  <form class="form-inline" name="info_1" novalidate>
+    <div class="form-group">
+      <label for="familyName">　　　　　　　　　　 姓<span ng-show="info_1.familyName.$invalid"><font size="3" color="ee0000">※</font></span>　</label>
+      <input type="text" class="form-control" name ="familyName" id="" placeholder="（例）通保" ng-pattern="/^[^\x01-\x7Eｧ-ﾝﾞﾟ]+$/" ng-minlength="1" ng-maxlength="20" ng-model="inputs.familyName" ng-required="true">
+      
+    </div>
+    <br><br>
+    <div class="form-group">
+      <label for="firstName">　　　　　　　　　　 名<span ng-show="info_1.firstName.$invalid"><font size="3" color="ee0000">※</font></span>　</label>
+      <input type="text" class="form-control" name ="firstName" id="" placeholder="（例）監多郎" ng-pattern="/^[^\x01-\x7Eｧ-ﾝﾞﾟ]+$/" ng-minlength="1" ng-maxlength="20" ng-model="inputs.firstName" ng-required="true">
+      
+    </div>
+    <br><br>
+    <div class="form-group">
+      <label for="rank">　　　　　　　　 階　級<span ng-show="info_1.rank.$invalid"><font size="3" color="ee0000">※</font></span>　</label>
+      <select name="rank" class="form-control" ng-model="inputs.rank" ng-minlength="1" ng-required="true">
+        <option value="">選択してください</option>
+        <option ng-repeat="rank in ranks">{{rank.name}}</option>
+      </select>
+      
+    </div>
+    <br><br>
+    <div class="form-group">
+        <label for="assign">　　　　　　　　 補　職<span ng-show="info_1.assign.$invalid"><font size="3" color="ee0000">※</font></span>　</label>
+        <input type="text" class="form-control" name ="assign" id="" placeholder="（例）○○係陸曹、○○幹部等" ng-pattern="/^[^\x01-\x7Eｧ-ﾝﾞﾟ]+$/" ng-minlength="1" ng-maxlength="30" ng-model="inputs.assign" ng-required="true">
+        
+      </div>
+  <!-- </form> -->
+  <br><br>
+  <!-- <form class="form-inline" name="info_12" novalidate> -->
+    <div class="form-group">
+      <label for="phone">　　　　　　　 内線番号<span ng-show="info_1.phone.$invalid"><font size="3" color="ee0000">※</font></span>　</label>
+      <input type="text" class="form-control" name ="phone" id="" placeholder="（例）8-462-xxx" ng-minlength="9" ng-maxlength="9" ng-pattern="/^\d{1}[-]\d{1,3}[-]\d{3,5}$/" ng-model="inputs.phone" ng-required="true">
+      <!-- <input type="text" class="form-control" name ="phone" id="" placeholder="（例）8-00-0123（半角）" ng-pattern="/^\d{1}[-]\d{1,3}[-]\d{3,5}$/" ng-model="inputs.phone" ng-required="true"> -->
+      <!-- <span ng-show="info_12.phone.$error.pattern"><font size="3" color="aa0000">内線番号は例のとおり入力して下さい。</font> -->
+    </div>
+    <br>　　　　　　　　　　　※内線が無い場合は、0-0-00000と入力してください。
+    <br>
+  </form>
+
+  <hr>
+  <h3>部署の情報<span ng-show="info_2.$invalid"><font size="3" color="ee0000"><br>　　　　下記項目に入力誤り、未入力があります。＜各項目全角、５０文字以内＞</font></span></h3>
+
+  <form class="form-horizontal" name="info_2" novalidate>
+    <div class="form-group">
+      <label for="army" class="col-xs-3 control-label">所属等
+      <span ng-show="info_2.army.$invalid"><font size="3" color="ee0000">※</font></span></label>
+      <div class="col-xs-9">
+        <select name="army" class="form-control" ng-model="inputs.army" ng-minlength="1" ng-required="true">
+          <option value="">選択してください</option>
+          <option ng-repeat="army in armies">{{army.name}}</option>
+        </select>
+        
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label for="station" class="col-xs-3 control-label">所在地等
+      <span ng-show="info_2.station.$invalid"><font size="3" color="ee0000">※</font></span></label>
+      <div class="col-xs-9">
+        <select name="station" class="form-control" ng-model="inputs.station" ng-minlength="1" ng-required="true">
+          <option value="">選択してください</option>
+          <option ng-repeat="sta in stations ">{{sta.name}}</option>
+          <!-- <option ng-repeat="sta in stations | filter:inputs.army ">{{sta.name}}</option> -->
+        </select>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label for="firstunit" class="col-xs-3 control-label">１次名
+          <span ng-show="info_2.firstunit.$invalid"><font size="3" color="ee0000">※</font></span></label>
+      <div class="col-xs-9">
+        <input type="text" name="firstunit" class="form-control" placeholder="（例）第○師団、○○学校、○○混成団等" ng-pattern="/^[^\x01-\x7Eｧ-ﾝﾞﾟ]+$/" ng-minlength="1" ng-maxlength="50" ng-model="inputs.firstunit" ng-required="true">
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label for="secondunit" class="col-xs-3 control-label">２次名
+        <span ng-show="info_2.secondunit.$invalid"><font size="3" color="ee0000">※</font></span></label>
+      <div class="col-xs-9">
+        <input type="text" name="secondunit" class="form-control" placeholder="（例）第○普通科連隊、○○部等" ng-pattern="/^[^\x01-\x7Eｧ-ﾝﾞﾟ]+$/" ng-minlength="1" ng-maxlength="50" ng-model="inputs.secondunit" ng-required="true">
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label for="thirdunit" class="col-xs-3 control-label">３次名
+        <span ng-show="info_2.thirdunit.$invalid"><font size="3" color="ee0000">※</font></span></label>
+      <div class="col-xs-9">
+        <input type="text" name="thirdunit" class="form-control" placeholder="（例）第○中隊、○○科等" ng-pattern="/^[^\x01-\x7Eｧ-ﾝﾞﾟ]+$/" ng-minlength="1" ng-maxlength="50" ng-model="inputs.thirdunit" ng-required="true">
+      </div>
+    </div>
+  </form>
+
+  <hr>
+  <h3>この電子計算機の情報<span ng-show="info_3.$invalid"><font size="3" color="ee0000"><br>　　　　下記項目に入力誤り、未入力があります。＜各項目全角、３０文字以内＞</font></span></h3>
+  <form class="form-inline" name="info_3" novalidate>
+
+    <div class="form-group">
+      <label for="ComputerName">　　　　　 コンピューターの名称<span ng-show="info_3.system.$invalid"><font size="3" color="ee0000">※</font></span>　</label>
+      <!-- <div class="col-xs-9"> -->
+        <select name="system" class="form-control" ng-model="inputs.ComputerName" ng-minlength="1" ng-required="true">
+            <option value="">選択してください</option>
+            <option ng-repeat="system in systems">{{system.name}}</option>
+        </select>
+      <!-- </div> -->
+      <!-- <input type="text" class="form-control" id="" placeholder="（例）業務用電子計算機" ng-pattern="/^[^\x01-\x7Eｧ-ﾝﾞﾟ]+$/" ng-minlength="1" ng-maxlength="30" ng-model="inputs.ComputerName" ng-required="true"> -->
+    </div>
+  <br><br>
+    <div class="form-group">
+      <label for="Location">　　　　　　　 設置場所<span ng-show="info_3.place.$invalid"><font size="3" color="ee0000">※</font></span>　</label>
+      <input type="text" name="place" class="form-control" id="" placeholder="（例）Ｂ棟２Ｆ幹部室" ng-pattern="/^[^\x01-\x7Eｧ-ﾝﾞﾟ]+$/" ng-minlength="1" ng-maxlength="30" ng-model="inputs.Location" ng-required="true">
+    </div>
+
+  </form>
+
+  <hr>
+
+  <nav aria-label="pager">
+    <ul class="pager">
+      <li class="previous">
+        <a href="start">
+          <span aria-hidden="true">&larr;</span>    前へ</a>
+      </li>
+      <span ng-show="info_1.$valid"><span ng-show="info_2.$valid"><span ng-show="info_3.$valid">
+        <!-- <span ng-show="info_1.$valid"><span ng-show="info_12.$valid"><span ng-show="info_2.$valid"><span ng-show="info_3.$valid"></span> -->
+        <li class="next">
+          <a href="confirm">
+            <b>次へ    <span aria-hidden="true">&rarr;</span></b>
+          </a>
+        </li>
+      </span></span></span></span>
+    </ul>
+  </nav>
+</div>
