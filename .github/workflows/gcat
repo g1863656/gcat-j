@@ -1,0 +1,150 @@
+//
+// コマンドを実行して処理する本体スクリプト
+//
+const fs = require('fs');
+const os = require('os');
+
+const gcat_template = require('./gcatdata.json');
+
+const GCAT = require('./gcat.js');
+const GCATCheck = require('./gcatcheck.js');
+const { Parawait } = require('./parallel.js');
+
+const gc = new GCAT(gcat_template);
+const gcheck = new GCATCheck(gcat_template);
+
+// TEST CODE
+async function test(_inputs) {
+    try {
+        let x = 25;
+        let y = 0;
+        gc.setBasicInfo(_inputs)
+        y++;
+        console.log("<<<<<  " + y + "/" + x + " START >>>>>端末の情報を取得します。");
+        await gc.getHostInfo1();
+        y++;
+        console.log("<<<<<  " + y + "/" + x + " START >>>>>使用中のユーザー名を取得します。");
+        y++;
+        await gc.getHostInfo2();
+        console.log("<<<<<  " + y + "/" + x + " START >>>>>マックアドレスを取得します。");
+        y++;
+        // await gc.getMAC();
+        console.log("<<<<<  " + y + "/" + x + " START >>>>>ＯＳ情報を取得します。");
+        y++;
+        await gc.getOSInfo();
+        console.log("<<<<<  " + y + "/" + x + " START >>>>>ハードウェアの情報を取得します。");
+        y++;
+        await gc.getHardwareInfo();
+        console.log("<<<<<  " + y + "/" + x + " START >>>>>使用中のユーザーの情報を取得します。");
+        y++;
+        await gc.getCurrentUserInfo();
+        console.log("<<<<<  " + y + "/" + x + " START >>>>>グループ情報を取得します。");
+        y++;
+        await gc.getGroupsInfo();
+        console.log("<<<<<  " + y + "/" + x + " START >>>>>他のユーザー情報を取得します。");
+        y++;
+        await gc.getUsersInfo();
+        console.log("<<<<<  " + y + "/" + x + " START >>>>>管理者ユーザ情報を取得します");
+        y++;
+        await gc.getAdminInfo();
+        console.log("<<<<< " + y + "/" + x + " START >>>>>ドメイン情報を取得します。");
+        y++;
+        await gc.getWindowsDomainInfo();
+        console.log("<<<<< " + y + "/" + x + " START >>>>>ネットワークカード情報を取得します。");
+        y++;
+        await gc.getNICInfo();
+        console.log("<<<<< " + y + "/" + x + " START >>>>>パスワードポリシー情報を取得します。");
+        y++;
+        await gc.getPasswordPolicy();
+        console.log("<<<<< " + y + "/" + x + " START >>>>>ＮＴＰの振り向け先を取得します。");
+        y++;
+        await gc.getNTPInfo();
+        console.log("<<<<< " + y + "/" + x + " START >>>>>再認証の設定を取得します。");
+        y++;
+        await gc.getReauthInfo();
+        console.log("<<<<< " + y + "/" + x + " START >>>>>ネットワークポートの情報を取得します。");
+        y++;
+        await gc.getNetworkStatus();
+        console.log("<<<<< " + y + "/" + x + " START >>>>>ファイアウォールの情報を取得します。");
+        y++;
+        await gc.getFirewallsInfo();
+        console.log("<<<<< " + y + "/" + x + " START >>>>>ＷＳＵＳの情報を取得します。");
+        y++;
+        await gc.getWsusInfo();
+        console.log("<<<<< " + y + "/" + x + " START >>>>>ログの管理情報を取得します。");
+        y++;
+        await gc.getLogsInfo();//日付あり
+        console.log("<<<<< " + y + "/" + x + " START >>>>>サービスの状態を取得します。");
+        y++;
+        await gc.getServices();
+        console.log("<<<<< " + y + "/" + x + " START >>>>>プロセスの状態を取得します。");
+        y++;
+        await gc.getProcesses();
+        console.log("<<<<< " + y + "/" + x + " START >>>>>インストールされたソフトウェア情報を取得します。※端末の状態により、ここの処理に時間がかかります。");
+        y++;
+        await gc.getSoftwares();//日付あり
+        console.log("<<<<< " + y + "/" + x + " START >>>>>共有フォルダの状態を取得します。");
+        y++;
+        await gc.getSharedResources();
+        console.log("<<<<< " + y + "/" + x + " START >>>>>ウィルス対策ソフトの状態を取得します。");
+        y++;
+        await gc.getAntiVirusSofts();//日付あり
+        console.log("<<<<< " + y + "/" + x + " START >>>>>ファイル暗号化ソフトの状態を取得します。");
+        y++;
+        await gc.getMODFileEncryption();//日付あり
+        console.log("<<<<< " + y + "/" + x + " START >>>>>適用されているセキュリティパッチを取得します。※端末の状態により、ここの処理に時間がかかります。");
+        y++;
+        await gc.getMSPatch();//日付あり
+
+        // 出力チェック。ここでデータをチェックできる。
+        results = gc.getResults();
+        gcheck.checkAll(results);
+        // console.log(results);
+        return results;
+    } catch (error) {
+        console.log("Error : " + error);
+        // window.open('about:blank','_self').close();
+    }
+};
+
+async function writeResultsToFile(results) {
+    // ファイルに保存する…ファイル名生成もやってます。
+    try {
+        let ExecDayTime = "";
+        ExecDayTime = results.ExecDayTime.replace(/:/g, "").replace(/-/g, "").replace(/T/g, "").substr(0, 14);
+        let FileName = results.Camp + '_' + results.Unit + '_' + ExecDayTime + '_';
+        let path = os.homedir();
+        console.log(path);
+        await fs.writeFileSync(path + "\\desktop\\" + FileName + '.json', JSON.stringify(results));
+        console.log("ファイルの書き出しに成功！");
+        let FullFileName = path + '\\desktop\\' + FileName + '.json';
+    //↓生成したファイルの保全処置（権限の変更は実装していません）
+        gc.changeReadOnly(FullFileName);
+        let FileName_ = await gc.getFileHash(FullFileName, FileName);
+        // let UserName = results.CurrentUserInfo.username;
+        // FullFileName = path + '\\desktop\\' + FileName_ + '.json';
+        // let tmp2 = await gc.changeAuthority(FullFileName, UserName);
+        return FileName_;
+    } catch (error) {
+        console.log("ファイルの書き出しに失敗… : " + error);
+        return false;
+    }
+};
+//　本体呼び出し用
+async function gcatStart(_inputs) {
+    try {
+        const ret = await test(_inputs);
+        return ret;
+    } catch (error) {
+        console.log("Error : " + error);
+        return false;
+    }
+}
+
+// TEST EXECUTION　↓デバッグ用の専用コードだけどstartファイルを書き換えたのでもう使えません
+// async function test2(){
+//     const ret = await test({Camp : "",Army : "",Station : "",DutyPersonnel : "",ExtensionNumber : "" });
+//     console.log(ret);
+// };
+
+// test2();
