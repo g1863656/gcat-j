@@ -1,0 +1,33 @@
+
+// var os = require('os');
+// console.log('OS = ' + os.arch());
+// console.log('OS = ' + os.cpus());
+// console.log('OS = ' + os.homedir());
+// console.log('OS = ' + os.hostname());
+// console.log('OS = ' + os.platform());
+
+
+const win = nw.Window.get();
+
+const AppTitle = "【通信保全監査隊】 陸自電子計算機監査ツール <GCAT>";
+
+const tray = new nw.Tray({ title: 'Tray', tooltip: AppTitle , icon: ''});
+
+if(nw.App.argv[0] == "-b" || nw.App.argv[0] == "--background"){
+    // backgroundモードなら
+    console.info("Background Mode Booting");    
+    win.hide();
+    
+    async function test2(){
+    const ret = await gcatStart({Camp : "",Army : "",Station : "",DutyPersonnel : "",ExtensionNumber : "" });
+    let tmp = writeResultsToFile(ret);
+    console.log(ret);
+    win.close();
+    };
+    test2();
+    
+} else {
+    console.info("Normal Mode Booting");
+    //nw open的なしょりをいれる
+    // win.open();
+};
