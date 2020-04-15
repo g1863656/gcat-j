@@ -1,0 +1,96 @@
+const app = angular.module('gcat', ['ngRoute']);
+
+app.config([
+  '$routeProvider', '$locationProvider', function ($routeProvider, $locationProvider) {
+    $routeProvider
+      .when('/', {
+        templateUrl: 'apps/pages/start.html',
+        controller: 'StartController'
+      })
+      .when('/input', {
+        templateUrl: 'apps/pages/input.html',
+        controller: 'InputController'
+      })
+      .when('/confirm', {
+        templateUrl: 'apps/pages/confirm.html',
+        controller: 'InputController'
+      })
+      .when('/exec', {
+        templateUrl: 'apps/pages/exec.html',
+        controller: 'ExecController'
+      })
+      .when('/results', {
+        templateUrl: 'apps/pages/results.html',
+        controller: 'ResultsController'
+      })
+      .otherwise({
+        redirectTo: '/'
+      });
+    $locationProvider.html5Mode(true);
+  }]);
+
+app.controller('MainController', ['$scope', function ($scope) {
+  // Main Scope(共通的なスコープ)
+  $scope.results = { json: {} };
+  $scope.inputs = {
+    familyName: "",
+    firstName: "",
+    rank: "",
+    phone: "8-",
+    assign: "",
+    army: "",
+    station: "",
+    firstunit: "",
+    secondunit: "",
+    thirdunit: "",
+    ComputerName: "",
+    Location: ""
+   
+  };
+}]);
+
+app.controller('StartController', ['$scope', '$route', function ($scope, $route) {
+  $scope.testClick = function () {
+    $scope.test = "ohta kaoru";
+  }
+}]);
+app.controller('InputController', ['$scope', '$route', function ($scope, $route) {
+  $scope.ranks = require('./apps/data/ranks.json');
+  $scope.stations = require('./apps/data/stations.json');
+  $scope.armies = require('./apps/data/armies.json');
+  $scope.systems = require('./apps/data/system.json');
+}]);
+app.controller('ExecController', ['$scope', '$location', function ($scope, $location) {
+  $scope.execScreen = 1;
+  // ここで処理を実行
+  $scope.exec = async function () {
+    try {
+      $scope.execScreen = 2;
+      $scope.results.json = await gcatStart($scope.inputs);
+      if ($scope.results) {
+        // ファイルへの書き込み
+        let FileName = await writeResultsToFile($scope.results.json);
+        if (FileName) {
+          // 成功
+          alert('調査が終了しファイルをデスクトップに保存しました。ファイル名は　' + FileName + '.json　です。ファイル名は変更しないでください。\nご協力ありがとうございました。');
+          // 画面移動
+          $scope.execScreen = 3;
+          $location.url("/results");
+          // $scope.results.json = JSON.stringify($scope.results.json);
+          $scope.$apply();
+        } else {
+          throw '調査を中断しました。\n手順を確認してからもう一度実行してください。';
+          window.open('about:blank', '_self').close();
+        }
+      } else {
+        throw '調査を中断しました。\n手順を確認してからもう一度実行してください。';
+        window.open('about:blank', '_self').close();
+      }
+    } catch (error) {
+      // 失敗
+      alert(error);
+    }
+  }
+}]);
+app.controller('ResultsController', ['$scope', function ($scope) {
+}]);
