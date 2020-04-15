@@ -1,0 +1,29 @@
+class timeutil {
+    constructor(){
+
+    }
+    NTUTCTime(time){
+        let date = new Date();
+        date.setFullYear(time.substr(0,4));
+        date.setMonth(time.substr(4,2)-1);
+        date.setDate(time.substr(6,2));
+        date.setHours(time.substr(8,2));
+        date.setMinutes(time.substr(10,2));
+        date.setSeconds(time.substr(12,2))
+        date.setMilliseconds(time.substr(14,4));
+        return date;
+    };
+    NetUserTime(time){
+        let date = new Date();
+        const tmp = time.split(" ");
+        const YMD = new String(tmp[0]).split("/");
+        const HMS = new String(tmp[1]).split(":");
+        date.setFullYear(YMD[0]);
+        date.setMonth(YMD[1] - 1);
+        date.setHours(HMS[0]);
+        date.setMinutes(HMS[1]);
+        date.setSeconds(HMS[2]);
+        return date;
+    }
+}
+module.exports = new timeutil();
