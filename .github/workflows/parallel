@@ -1,0 +1,26 @@
+/*
+並列処理用モジュール。
+Promiseを多用するとコードが見づらいので、複数のawaitをとりまとめるParawaitを実装した。
+*/
+
+module.exports = class Parallels{
+    constructor(){
+        this.paraList = new Array();
+    }
+    Parawait(...promises){
+        console.log("PARALLEL EXECUTION START : " + promises.length + " exec")
+        if(promises.length==1){
+            return Promise.all(promises[0]);
+        } else {
+            return Promise.all(promises);
+        }
+        return;
+    }
+    add(func){
+        this.paraList.push(func)
+        return;
+    }
+    exec(){
+        return Promise.all(this.paraList);
+    }
+}
