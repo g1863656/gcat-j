@@ -1,0 +1,16 @@
+<div class="container">
+  <h2>調査開始（３／４ ）</h2>
+
+  <p class="text-center" ng-show="execScreen == 1">調査を開始します。準備がよければ、下記のボタンを押下してください。</p>
+  
+  <p class="text-center">
+    <!-- <a class="btn btn-primary btn-lg" href="running" ng-click="gc.setBasicInfo(inputs.station)" role="button">はじめる &raquo;</a> -->
+    <a class="btn btn-primary btn-lg" ng-click="exec(inputs)" role="button" ng-show="execScreen == 1">はじめる</a>
+
+    <p class="text-center" ng-show="execScreen == 2">
+      調査しています。しばらくお待ちください...<br><br>
+      <progress></progress>
+      <br><br>※進捗状況を確認する場合はF12ボタンを押し、表示されたウィンドウのConsoleタブを選択してください。
+    </p>
+  </p>
+</div>
