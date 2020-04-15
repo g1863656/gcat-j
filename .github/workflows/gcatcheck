@@ -1,0 +1,76 @@
+module.exports = class GCATCheck{
+    constructor(template){
+        this.pass = 0;
+        this.failed = 0;
+        this.warning = 0;
+
+        this.temp = template;
+        this.tempCheckList = {};
+        for (const key in this.temp) {
+            if (this.temp.hasOwnProperty(key)) {
+                this.tempCheckList[key] = this.temp[key];
+                // if(typeof(this.temp[key])=="object"){
+                //     for (const key2 in this.temp[key]) {
+                //         if (this.temp[key].hasOwnProperty(key2)) {
+                //             this.tempCheckList[key2] = this.temp[key][key2];
+                //         }
+                //     }
+                // }
+            }
+        }
+    }
+    checkAll(data){
+        console.log("<<< CHECK ALL START >>>");
+        let status = this.check(data);
+        if( status ){
+            console.log("<<< CHECL ALL END [ALL GREEN] >>>");
+        } else {
+            console.log("<<< CHECL ALL END [PASS " + this.pass + "] [FAILED " + this.failed + "] [WARNING  " + this.warning + "] >>>")
+        }
+        
+        return status;
+    }
+    check(data){
+        let status = true;
+        this.pass = 0;
+        this.failed = 0;
+        this.warning = 0;
+
+        this.dataCheckList = {};
+        for (const key in data) {
+            if (data.hasOwnProperty(key)) {
+                this.dataCheckList[key] = data[key];
+                // if(typeof(data[key])=="object"){
+                //     for (const key2 in data[key]) {
+                //         if (data[key].hasOwnProperty(key2)) {
+                //             this.dataCheckList[key2] = data[key][key2];
+                //         }
+                //     }
+                // }
+            }
+        }
+
+        for (const key in this.tempCheckList){
+            if(this.tempCheckList.hasOwnProperty(key)){
+                if(typeof(this.dataCheckList[key])==typeof(this.tempCheckList[key])){
+                    if( this.dataCheckList[key] && (this.dataCheckList[key].length!=0) && !(Object.keys(this.dataCheckList[key]).length === 0) ){
+                        // console.info("+ [PASS][OK] " + key + " :" + typeof(this.tempCheckList[key]) + " -> " + this.dataCheckList[key] + " :" + typeof(this.dataCheckList[key]));
+                        console.info("+ [PASS][OK] " + key + " :" + typeof(this.tempCheckList[key]) );
+                        // console.info(this.dataCheckList[key]);
+                        this.pass++;
+                        status = status && true;
+                    } else {
+                        console.warn("- [FAILED][DATA] " + key + " :" + typeof(this.tempCheckList[key]) + " -> " + this.dataCheckList[key] + " :" + typeof(this.dataCheckList[key]));
+                        this.failed++;
+                        status = status && false;
+                    }
+                } else {
+                    console.warn("- [WARNING][TYPE] " + key + " :" + typeof(this.tempCheckList[key]) + " -> "  + this.dataCheckList[key] + " :" + typeof(this.dataCheckList[key]));
+                    this.warning++;
+                    status = status && false;
+                }
+            }
+        }
+        return status;
+    }
+}
