@@ -1,0 +1,37 @@
+<div class="container">
+  <h2>基本情報の確認（２／４）</h2>
+
+  <hr>
+  <h3>あなたの情報</h3>
+  
+  <p>{{inputs.familyName}} {{inputs.firstName}} ({{inputs.rank}})</p>
+  <p>{{inputs.assign}}</p>
+  <p>{{inputs.phone}}</p>
+
+  <hr>
+  <h3>会社の情報</h3>
+  <p>{{inputs.army}}</p>
+  <p>{{inputs.firstunit}} / {{inputs.secondunit}} / {{inputs.thirdunit}}</p>
+  <p>{{inputs.station}}</p>
+  
+  <hr>
+  <h3>このコンピューターの情報</h3>
+  <p>{{inputs.ComputerName}} / {{inputs.Location}} </p>
+
+  <br>
+  <form class="form-inline" name="Conf" novalidate>
+    <input type="checkbox" name ="Check" ng-model="inputs.Check" required><font size="3" color="00AAAA"> 上記に間違いないことを確認し、左にチェックを入れて次に進んで下さい。</font>
+  </form>
+  <nav aria-label="pager">
+    <ul class="pager">
+      <li class="previous">
+        <a href="input"><span aria-hidden="true">&larr;</span> 前へ</a>
+      </li>
+      <span ng-show="Conf.Check.$valid">
+        <li class="next">
+          <a href="exec"><b>次へ <span aria-hidden="true">&rarr;</span></b></a>
+        </li>
+      </span>
+    </ul>
+  </nav>
+</div>
