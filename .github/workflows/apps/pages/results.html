@@ -1,0 +1,73 @@
+<div class="container">
+	<h2>調査結果（４／４）</h2>
+	<p class="text-center">
+		調査が終わりました。ご協力ありがとうございました。<br>結果の一部を表示しますが、端末の状態によっては正確に出力されない場合があります。
+		<br>
+		<br>
+		<h3>現在のアカウント情報</h3>
+		<table cellpadding="5" cellspacing="2" border="1" class="1st" align="center">
+			<col width="30%" />
+			<col width="30%" />
+			<col width="40%" />
+			<tr>
+				<td class="text-center">現在のアカウント</td>
+				<td class="text-center">{{results.json.CurrentUserInfo.username}}</td>
+			</tr>
+			<tr>
+				<td class="text-center">最終ログオン日時</td>
+				<td class="text-center">{{results.json.CurrentUserInfo.LastLogonDate}}</td>
+			</tr>
+			<tr>
+				<td class="text-center">パスワードの最終変更日時</td>
+				<td class="text-center">{{results.json.CurrentUserInfo.PasswordLastChange}}</td>
+			</tr>
+			<tr>
+				<td class="text-center">パスワードの最小文字数※</td>
+				<td class="text-center">{{results.json.PasswordLength}}文字以上</td>
+			</tr>
+			<tr>
+				<td class="text-center">パスワードの有効日数※</td>
+				<td class="text-center">{{results.json.PasswordMaxdays}}日</td>
+			</tr>
+		</table>
+		※ＭＯＤ－０，１の端末は６文字以上、３か月以内、ＭＯＤ－２・３の端末は８文字以上、１か月以内
+		<br>
+		<br>
+		<h3>端末の情報</h3>
+		<table cellpadding="5" cellspacing="2" border="1" class="1st" align="center">
+			<col width="30%" />
+			<col width="30%" />
+			<col width="40%" />
+			<tr>
+				<td class="text-center">時刻参照先</td>
+				<td class="text-center">{{results.json.NTPServerAddr}}</td>
+			</tr>
+			<tr>
+				<td class="text-center">セキュリティパッチ取得先</td>
+				<td class="text-center">{{results.json.WsusServer}}</td>
+			</tr>
+			<tr>
+				<td class="text-center">ファイル暗号化ソフトの状況</td>
+				<td class="text-center">{{results.json.MODFileEncryption.State}}</td>
+			</tr>
+		</table>
+		<!-- <h3>管理者権限を持つアカウント一覧</h3>
+
+		<body>
+			<ul ng-init="adminInfo=results.json.LocalAdmins">
+				<li ng-repeat="admin in adminInfo">
+					<p>{{admin}}</p>
+				</li>
+			</ul>
+		</body>
+		<h3>共有フォルダの状況</h3>
+
+		<body>
+			<ul ng-init="shareInfo=results.json.SharedResources">
+				<li ng-repeat="share in shareInfo">
+					<p>共有名⇒{{share.Name}}　　パス⇒{{share.Path}}　　説明⇒{{share.Description}}　　</p>
+				</li>
+			</ul>
+		</body> -->
+	</p>
+</div>
