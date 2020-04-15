@@ -1,0 +1,94 @@
+{
+    "GCATversion" : "",
+    "ExecDayTime" : "",
+
+    "Army" : "",
+    "Camp" : "",
+    "Unit" : "",
+    "DutyPersonnel" : "",
+    "Rank" : "",
+    "FullName" : "",
+    "ExtensionNumber" : "",
+    "ComputerName" : "",
+    "Location" : "",
+
+    "Hostname" : "",
+    "ID" : "",
+
+    "CPUType" : "",
+    "DNSHostname" : "",
+    "Domain" : "",
+    "Manufacturer" : "",
+    "Model" : "",
+    "UserName" : "",
+
+    "OSType" : "",
+    "OSPlatform" : "",
+    "OSRelease" : "",
+    "OSName" : "",
+    "OSBuildNumber" : "",
+    "OSVersion" : "",
+    "OSServicePack" : "",
+    "Description" : "",
+    "OSInstallDate" : "",
+    "LastBootUpTime" : "",
+    "OSRegisterdUser" : "",
+    "OSSerialNumber" : "",
+    "OSarch" : "",
+    "TotalMemory" : "",
+    "CPU" : [],
+    "Diskdrive" : [],
+    "Volume" : [],
+
+    "CurrentUserInfo" : {},
+    "CurrentLevel" : "",
+    "Group" : [],
+    "LocalUsers" : {},
+    "LocalAdmins" : [],
+    "NTDomain" : [],
+    "NIC" : {},
+
+    "LogoutForcedMinutes" : "",
+    "PasswordMindays" : "",
+    "PasswordMaxdays" : "",
+    "PasswordLength" : "",
+    "PasswordHistory" : "",
+    "LockoutRetries" : "",
+    "LockingTime" : "",
+    "LockCntReset" : "",
+    "ComputerRole" : "",
+
+    "NTPServerAddr" : "",
+
+    "ScreenSaver" : {},
+
+    "TCP" : [],
+    "TCPv6" : [],
+    "UDP" : [],
+    "UDPv6" : [],
+
+    "FirewallConfig" : {},
+    "FirewallProfiles" : [],
+
+    "Logs" : {
+        "Application":{},
+        "System":{},
+        "Security":{}
+    },
+
+    "WsusServer": "",
+    
+    "Services" : [],
+
+    "Processes" : [],
+
+    "Softwares" : [],
+
+    "SharedResources" : [],
+
+    "AntiVirusSofts" : {},
+
+    "MODFileEncryption" : {},
+    
+    "MSPatch" : []
+}
